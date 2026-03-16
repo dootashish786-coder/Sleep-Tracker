@@ -260,7 +260,35 @@
   </div>
 
 <script>
-// ── data ──────────────────────────────────────────────────────────────────────
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+const firebaseConfig = { npm install firebase };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const USER_ID = "my-sleep"; // change this to your name
+
+async function loadLogs(){
+  const q = query(collection(db, USER_ID), orderBy("date","desc"));
+  const snap = await getDocs(q);
+  logs = snap.docs.map(d => d.data());
+  sjRH();
+}
+
+async function saveLogs(){
+  for(const log of logs){
+    await setDoc(doc(db, USER_ID, String(log.id)), log);
+  }
+}
+
+async function deleteLog(id){
+  logs = logs.filter(l => l.id !== id);
+  await deleteDoc(doc(db, USER_ID, String(id)));
+  sjRH();
+}
+
+loadLogs();
 const CHIPS = [
   {l:"🚽 Woke to pee",    v:"Woke up to pee during night"},
   {l:"📱 Late mobile",    v:"Was on mobile late before sleep"},
@@ -281,7 +309,7 @@ const QC = {
   bad:      {label:"Bad",      color:"#f87171",bg:"rgba(248,113,113,0.1)",bat:18},
 };
 
-let logs = JSON.parse(localStorage.getItem("sleepjournal_v1")||"[]");
+let logs = JSON.parse(localStorage.getItem("saveLogs();")||"[]");
 let saving = false;
 
 // ── init ──────────────────────────────────────────────────────────────────────
