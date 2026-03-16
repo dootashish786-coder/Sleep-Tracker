@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🌙 Sleep Journal</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:linear-gradient(155deg,#07070e 0%,#0a0d1b 55%,#070c14 100%);
+    font-family:'Georgia',serif;
+    color:#ddd8f0;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 10% 10%,rgba(100,60,200,0.06) 0%,transparent 50%),
+               radial-gradient(ellipse at 90% 90%,rgba(40,100,220,0.04) 0%,transparent 50%);
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:28px 16px 72px;position:relative}
+  .hdr{text-align:center;margin-bottom:28px}
+  .moon{font-size:38px;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(140,100,255,0.4))}
+  h1{font-size:24px;font-weight:400;letter-spacing:0.1em;color:#bab0e0;
+     text-shadow:0 0 40px rgba(140,100,255,0.3);margin-bottom:5px}
+  .tagline{font-size:10px;color:#3e3c58;letter-spacing:0.22em;text-transform:uppercase;
+           font-family:monospace}
+  .nav{display:flex;gap:3px;background:rgba(255,255,255,0.03);border-radius:10px;
+       padding:3px;margin-bottom:22px}
+  .nav-btn{flex:1;padding:9px 0;border-radius:8px;border:none;cursor:pointer;
+           font-family:monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+           background:transparent;color:#4a4468;border-top:1px solid transparent;transition:all 0.2s}
+  .nav-btn.active{background:rgba(140,100,255,0.15);color:#c0b0e8;
+                  border-top:1px solid rgba(140,100,255,0.2)}
+  .card{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+        border-radius:16px;padding:20px 18px;margin-bottom:14px}
+  .lbl{font-size:10px;color:#5a5470;letter-spacing:0.14em;text-transform:uppercase;
+       font-family:monospace;margin-bottom:6px;display:block}
+  .lbl span{color:#2e2c42}
+  input,textarea{width:100%;padding:11px 13px;border-radius:10px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+    color:#e0daf0;font-size:14px;font-family:'Courier New',monospace;outline:none;
+    transition:border-color 0.2s}
+  input:focus,textarea:focus{border-color:rgba(140,100,255,0.4)}
+  input.mb{margin-bottom:16px}
+  textarea{resize:vertical;line-height:1.65;font-size:13px}
+  .time-row{display:flex;gap:10px;margin-bottom:14px}
+  .time-wrap{flex:1;position:relative}
+  .time-hint{position:absolute;right:9px;top:50%;transform:translateY(-50%);
+             font-size:10px;color:#6a6488;font-family:monospace;pointer-events:none}
+  .time-err{font-size:10px;color:#f87171;margin-top:3px;font-family:monospace}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .chip{padding:5px 11px;border-radius:99px;border:1px solid rgba(255,255,255,0.07);
+        cursor:pointer;font-size:11px;font-family:monospace;transition:all 0.18s;
+        background:rgba(255,255,255,0.04);color:#5a5478}
+  .chip.on{background:rgba(140,100,255,0.2);color:#c0b0e8;
+           border-color:rgba(140,100,255,0.35)}
+  .preview{display:flex;align-items:center;justify-content:space-between;
+           padding:14px 16px;border-radius:12px;margin-bottom:14px;margin-top:14px;
+           transition:all 0.3s}
+  .preview-left .hrs{font-size:30px;font-family:monospace;line-height:1}
+  .preview-left .times{font-size:11px;color:#5a5478;font-family:monospace;margin-top:3px}
+  .preview-right{text-align:right}
+  .quality-lbl{font-size:11px;font-family:monospace;margin-top:5px;letter-spacing:0.06em}
+  .qbar-wrap{width:100%;background:rgba(255,255,255,0.06);border-radius:99px;
+             height:6px;overflow:hidden}
+  .qbar-fill{height:100%;border-radius:99px;transition:width 0.9s cubic-bezier(.4,0,.2,1)}
+  .preview-hint{font-size:10px;color:#3e3c58;font-family:monospace;
+                margin-top:8px;text-align:center}
+  .battery{display:flex;align-items:center;gap:3px}
+  .bat-body{position:relative;width:48px;height:23px;border-radius:4px;overflow:hidden}
+  .bat-fill{position:absolute;left:0;top:0;bottom:0;transition:width 1s ease}
+  .bat-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+           font-size:9px;font-family:monospace;color:#fff;font-weight:700;letter-spacing:0.04em}
+  .bat-tip{width:3px;height:10px;border-radius:0 2px 2px 0}
+  .log-btn{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
+           font-family:monospace;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;
+           transition:all 0.3s;margin-bottom:6px}
+  .log-btn.ready{background:linear-gradient(135deg,rgba(140,100,255,0.22),rgba(80,140,255,0.18));
+                 color:#cec0f0;outline:1px solid rgba(140,100,255,0.25)}
+  .log-btn.disabled{background:rgba(255,255,255,0.03);color:#2e2c42;
+                    outline:1px solid rgba(255,255,255,0.05);cursor:not-allowed}
+  .log-hint{text-align:center;font-size:10px;color:#2a2840;font-family:monospace}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .stat{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+        border-radius:11px;padding:13px 8px;text-align:center}
+  .stat-v{font-size:20px;font-family:monospace;color:#b0a8d8;margin-bottom:2px}
+  .stat-v.good{color:#4ade80}
+  .stat-l{font-size:9px;color:#4a4468;letter-spacing:0.1em;text-transform:uppercase}
+  .empty{text-align:center;padding:60px 0;color:#2a2840}
+  .empty-moon{font-size:40px;margin-bottom:12px}
+  .empty-txt{font-family:monospace;font-size:12px;letter-spacing:0.1em}
+  .log-item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
+            border-radius:14px;padding:18px;margin-bottom:12px;position:relative}
+  .del-btn{position:absolute;top:14px;right:14px;background:none;border:none;
+           cursor:pointer;color:#3a3450;font-size:18px;line-height:1;padding:0;transition:color 0.2s}
+  .del-btn:hover{color:#f87171}
+  .item-date{font-family:monospace;font-size:11px;color:#4a4468;margin-bottom:5px}
+  .item-times{font-family:monospace;font-size:11px;color:#4a4468;margin-bottom:12px}
+  .item-metrics{display:flex;align-items:flex-end;gap:14px;margin-bottom:12px}
+  .item-hrs{font-size:28px;font-family:monospace;line-height:1}
+  .item-eff{font-size:10px;color:#f87171aa;font-family:monospace;margin-top:2px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;
+         font-size:10px;font-family:monospace;margin-left:auto}
+  .ready-msg{margin-top:12px;padding:11px 14px;border-radius:9px;
+             background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.18);
+             font-size:13px;color:#6abf7a;line-height:1.65}
+  .reframe-msg{margin-top:10px;padding:10px 13px;border-radius:9px;
+               background:rgba(140,100,255,0.07);border:1px solid rgba(140,100,255,0.13);
+               font-size:12.5px;color:#a090c8;line-height:1.65;font-style:italic}
+  .one-liner{margin-top:12px;padding:10px 13px;border-radius:9px;
+             background:rgba(140,100,255,0.07);border:1px solid rgba(140,100,255,0.13);
+             font-size:12.5px;color:#a090c8;line-height:1.65;font-style:italic}
+  .section-lbl{font-size:9px;color:#4a4468;letter-spacing:0.12em;text-transform:uppercase;
+               font-family:monospace;margin-bottom:5px;margin-top:11px}
+  .disruptor-row,.psy-row{font-size:11.5px;padding:4px 0;
+                          border-bottom:1px solid rgba(255,255,255,0.04);
+                          display:flex;gap:7px}
+  .disruptor-row{color:#f87171bb}
+  .psy-row{color:#8878a8}
+  .psy-row:last-child,.disruptor-row:last-child{border-bottom:none}
+  .morning-tip{margin-top:11px;padding:10px 13px;border-radius:9px;
+               background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.13);
+               font-size:12px;color:#5aaf6a;line-height:1.65}
+  details{margin-top:10px}
+  summary{font-size:10px;color:#3a3450;cursor:pointer;font-family:monospace;
+          letter-spacing:0.08em;user-select:none}
+  .notes-txt{margin-top:6px;font-size:12px;color:#5a5478;line-height:1.7;
+             white-space:pre-wrap;font-family:monospace;padding:8px 10px;
+             background:rgba(255,255,255,0.02);border-radius:7px}
+  .weekly-card{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+    border-radius:16px;padding:20px 18px;margin-bottom:14px}
+  .weekly-title{font-size:13px;color:#c0b0e8;letter-spacing:0.08em;margin-bottom:4px}
+  .weekly-sub{font-size:10px;color:#4a4468;font-family:monospace;letter-spacing:0.1em;
+    text-transform:uppercase;margin-bottom:14px}
+  .pattern-block{margin-bottom:14px;padding:12px 14px;border-radius:10px}
+  .pattern-block.bad{background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.15)}
+  .pattern-block.good{background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.13)}
+  .pattern-block.belief{background:rgba(140,100,255,0.07);border:1px solid rgba(140,100,255,0.15)}
+  .pattern-lbl{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;
+    font-family:monospace;margin-bottom:7px}
+  .pattern-lbl.bad{color:#f87171}
+  .pattern-lbl.good{color:#4ade80}
+  .pattern-lbl.belief{color:#a090c8}
+  .pattern-item{font-size:12.5px;line-height:1.65;padding:4px 0;
+    border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:7px}
+  .pattern-item:last-child{border-bottom:none}
+  .pattern-item.bad{color:#d06878}
+  .pattern-item.good{color:#5aaf6a}
+  .pattern-item.belief{color:#9080b8;font-style:italic}
+  .weekly-btn{width:100%;padding:13px;border-radius:11px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,rgba(140,100,255,0.2),rgba(80,140,255,0.15));
+    color:#c0b0e8;font-family:monospace;font-size:12px;letter-spacing:0.1em;
+    text-transform:uppercase;outline:1px solid rgba(140,100,255,0.22);
+    transition:all 0.3s;margin-bottom:10px}
+  .weekly-btn:disabled{background:rgba(255,255,255,0.03);color:#3a3450;
+    outline:1px solid rgba(255,255,255,0.05);cursor:not-allowed}
+  .weekly-loading{display:none;text-align:center;font-size:12px;color:#8878b0;
+    font-family:monospace;padding:16px;letter-spacing:0.08em}
+  .week-sel{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .week-opt{padding:6px 12px;border-radius:99px;border:1px solid rgba(255,255,255,0.07);
+    cursor:pointer;font-size:11px;font-family:monospace;background:rgba(255,255,255,0.03);
+    color:#5a5478;transition:all 0.18s}
+  .week-opt.on{background:rgba(140,100,255,0.18);color:#c0b0e8;
+    border-color:rgba(140,100,255,0.32)}
+  .weekly-insight{padding:12px 14px;border-radius:10px;font-size:13px;color:#a090c8;
+    line-height:1.7;font-style:italic;background:rgba(140,100,255,0.06);
+    border:1px solid rgba(140,100,255,0.13);margin-bottom:14px}
+  #loading{display:none;text-align:center;font-size:12px;color:#8878b0;
+           font-family:monospace;letter-spacing:0.08em;
+           background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+           border-radius:16px;padding:20px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="moon">🌙</div>
+    <h1>Sleep Journal</h1>
+    <p class="tagline">track · restore · understand</p>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" id="btn-log"     onclick="switchView('log')">Log Sleep</button>
+    <button class="nav-btn"        id="btn-history" onclick="switchView('history')">History</button>
+    <button class="nav-btn"        id="btn-weekly"  onclick="switchView('weekly')">Weekly</button>
+  </div>
+
+  <!-- LOG VIEW -->
+  <div id="view-log">
+    <div class="card">
+      <label class="lbl">Date</label>
+      <input type="date" id="inp-date" class="mb"/>
+
+      <div class="time-row">
+        <div class="time-wrap">
+          <label class="lbl">🌙 Sleep Time</label>
+          <input type="text" id="inp-bed" placeholder="11pm / 23:30" oninput="onTimeInput()"/>
+          <div class="time-hint" id="hint-bed"></div>
+          <div class="time-err" id="err-bed"></div>
+        </div>
+        <div class="time-wrap">
+          <label class="lbl">☀️ Wake Time</label>
+          <input type="text" id="inp-wake" placeholder="7am / 07:30" oninput="onTimeInput()"/>
+          <div class="time-hint" id="hint-wake"></div>
+          <div class="time-err" id="err-wake"></div>
+        </div>
+      </div>
+
+      <label class="lbl">📱 Left Mobile At <span>(optional)</span></label>
+      <input type="text" id="inp-mobile" placeholder="e.g. 1am, 12:30am" class="mb"/>
+
+      <label class="lbl">Quick Tags</label>
+      <div class="chips" id="chips"></div>
+
+      <label class="lbl">🗒️ Notes <span>(raw thoughts, anything)</span></label>
+      <textarea id="inp-notes" rows="4"
+        placeholder="Woke up to pee around 12am&#10;Had alcohol last night&#10;Anxious thoughts this morning&#10;Stressed about work…"></textarea>
+    </div>
+
+    <div class="preview" id="preview" style="display:none">
+      <div class="preview-left">
+        <div class="hrs" id="prev-hrs"></div>
+        <div class="times" id="prev-times"></div>
+      </div>
+      <div class="preview-right">
+        <div class="battery" id="prev-bat"></div>
+        <div class="quality-lbl" id="prev-qlbl"></div>
+      </div>
+    </div>
+    <div id="prev-bar-wrap" style="display:none;margin-bottom:14px">
+      <div class="qbar-wrap"><div class="qbar-fill" id="prev-bar"></div></div>
+      <div class="preview-hint">preview · AI will refine based on your notes</div>
+    </div>
+
+    <button class="log-btn disabled" id="log-btn" onclick="handleLog()">Analyse My Sleep</button>
+    <div class="log-hint">AI reads your notes · gives real, honest insight</div>
+    <div id="loading">🧠&nbsp; Analysing your night…</div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div id="view-history" style="display:none">
+    <div class="stats" id="stats-row"></div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+  <!-- WEEKLY VIEW -->
+  <div id="view-weekly" style="display:none">
+    <div class="weekly-card">
+      <div class="weekly-title">Weekly Pattern Analysis</div>
+      <div class="weekly-sub">AI reads your notes · finds what helps and hurts</div>
+      <label class="lbl">Select week</label>
+      <div class="week-sel" id="week-sel"></div>
+      <button class="weekly-btn" id="weekly-btn" onclick="runWeekly()">Analyse This Week</button>
+      <div class="weekly-loading" id="weekly-loading">🧠 &nbsp;Reading your week…</div>
+    </div>
+    <div id="weekly-result"></div>
+  </div>
+
+<script>
+// ── data ──────────────────────────────────────────────────────────────────────
+const CHIPS = [
+  {l:"🚽 Woke to pee",    v:"Woke up to pee during night"},
+  {l:"📱 Late mobile",    v:"Was on mobile late before sleep"},
+  {l:"🍺 Had alcohol",    v:"Had alcohol previous night"},
+  {l:"😰 Anxious morning",v:"Anxious or racing thoughts in morning"},
+  {l:"😴 Hard to sleep",  v:"Took long time to fall asleep"},
+  {l:"😤 Restless",       v:"Restless, tossed and turned"},
+  {l:"☕ Late caffeine",  v:"Had caffeine late in the day"},
+  {l:"💭 Weird dreams",   v:"Had vivid or disturbing dreams"},
+  {l:"🤒 Unwell",         v:"Feeling sick or unwell"},
+  {l:"😓 Stressed",       v:"High stress or worry before bed"},
+];
+const QC = {
+  excellent:{label:"Excellent",color:"#4ade80",bg:"rgba(74,222,128,0.1)",bat:95},
+  good:     {label:"Good",     color:"#a3e635",bg:"rgba(163,230,53,0.1)", bat:80},
+  fair:     {label:"Fair",     color:"#facc15",bg:"rgba(250,204,21,0.1)", bat:60},
+  poor:     {label:"Poor",     color:"#fb923c",bg:"rgba(251,146,60,0.1)", bat:38},
+  bad:      {label:"Bad",      color:"#f87171",bg:"rgba(248,113,113,0.1)",bat:18},
+};
+
+let logs = JSON.parse(localStorage.getItem("sleepjournal_v1")||"[]");
+let saving = false;
+
+// ── init ──────────────────────────────────────────────────────────────────────
+document.getElementById("inp-date").value = new Date().toISOString().slice(0,10);
+buildChips();
+
+function buildChips(){
+  const el = document.getElementById("chips");
+  el.innerHTML="";
+  CHIPS.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.textContent=c.l;
+    b.onclick=()=>chipToggle(c.v,b);
+    el.appendChild(b);
+  });
+}
+function chipToggle(val,btn){
+  const ta=document.getElementById("inp-notes");
+  if(ta.value.includes(val)){
+    ta.value=ta.value.replace(val,"").replace(/\n{2,}/g,"\n").trim();
+    btn.classList.remove("on");
+  } else {
+    ta.value=ta.value ? ta.value+"\n"+val : val;
+    btn.classList.add("on");
+  }
+}
+
+// ── time parsing ──────────────────────────────────────────────────────────────
+function parseTime(raw){
+  if(!raw) return null;
+  const s=raw.trim().toLowerCase().replace(/\s+/g,"")
+    .replace("midnight","12:00am").replace("noon","12:00pm");
+  const m=s.match(/^(\d{1,2})(?:[.:](\d{2}))?([ap]m?)?$/)||
+           s.match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  let h=parseInt(m[1]),min=parseInt(m[2]||"0");
+  const ap=m[3];
+  if(ap?.startsWith("p")&&h!==12) h+=12;
+  if(ap?.startsWith("a")&&h===12) h=0;
+  if(h>23||min>59) return null;
+  return {h,min,label:fmt12(h,min)};
+}
+function fmt12(h,min){
+  const ap=h>=12?"PM":"AM",hh=h%12||12;
+  return `${hh}:${String(min).padStart(2,"0")} ${ap}`;
+}
+function calcHours(bed,wake){
+  let m=(wake.h*60+wake.min)-(bed.h*60+bed.min);
+  if(m<=0) m+=1440;
+  return +(m/60).toFixed(2);
+}
+function getQuality(h){ return h>=8?"excellent":h>=7?"good":h>=6?"fair":h>=5?"poor":"bad"; }
+
+// ── live preview ──────────────────────────────────────────────────────────────
+function onTimeInput(){
+  const bedRaw=document.getElementById("inp-bed").value;
+  const wakeRaw=document.getElementById("inp-wake").value;
+  const bedP=parseTime(bedRaw), wakeP=parseTime(wakeRaw);
+
+  // hints
+  document.getElementById("hint-bed").textContent  = bedP  ? bedP.label  : "";
+  document.getElementById("hint-wake").textContent = wakeP ? wakeP.label : "";
+  document.getElementById("err-bed").textContent   = bedRaw.trim()&&!bedP  ? "Can't read time":"";
+  document.getElementById("err-wake").textContent  = wakeRaw.trim()&&!wakeP ? "Can't read time":"";
+
+  if(bedP&&wakeP){
+    const hours=calcHours(bedP,wakeP);
+    const q=getQuality(hours), cfg=QC[q];
+    const pct=Math.min((hours/10)*100,100);
+
+    // preview card
+    const prev=document.getElementById("preview");
+    prev.style.display="flex";
+    prev.style.background=cfg.bg;
+    prev.style.border=`1px solid ${cfg.color}22`;
+    document.getElementById("prev-hrs").innerHTML=
+      `<span style="color:${cfg.color}">${hours.toFixed(1)}</span><span style="font-size:13px;opacity:0.6">h</span>`;
+    document.getElementById("prev-times").textContent=`${bedP.label} → ${wakeP.label}`;
+
+    // battery
+    const bc=batColor(cfg.bat);
+    document.getElementById("prev-bat").innerHTML=batteryHTML(cfg.bat,bc);
+    document.getElementById("prev-qlbl").innerHTML=`<span style="color:${cfg.color}">${cfg.label}</span>`;
+
+    // bar
+    const bw=document.getElementById("prev-bar-wrap");
+    bw.style.display="block";
+    const bar=document.getElementById("prev-bar");
+    bar.style.width=pct+"%";
+    bar.style.background=`linear-gradient(90deg,${cfg.color}44,${cfg.color})`;
+    bar.style.boxShadow=`0 0 6px ${cfg.color}44`;
+
+    // button
+    const btn=document.getElementById("log-btn");
+    btn.className=saving?"log-btn disabled":"log-btn ready";
+  } else {
+    document.getElementById("preview").style.display="none";
+    document.getElementById("prev-bar-wrap").style.display="none";
+    document.getElementById("log-btn").className="log-btn disabled";
+  }
+}
+
+function batteryHTML(pct,color){
+  return `<div class="battery">
+    <div class="bat-body" style="border:2px solid ${color}77">
+      <div class="bat-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}44,${color}99);box-shadow:0 0 8px ${color}33"></div>
+      <div class="bat-txt">${pct}%</div>
+    </div>
+    <div class="bat-tip" style="background:${color}55"></div>
+  </div>`;
+}
+function batColor(pct){ return pct>=70?"#4ade80":pct>=45?"#facc15":"#f87171"; }
+
+// ── log ───────────────────────────────────────────────────────────────────────
+async function handleLog(){
+  const bedRaw=document.getElementById("inp-bed").value;
+  const wakeRaw=document.getElementById("inp-wake").value;
+  const bedP=parseTime(bedRaw), wakeP=parseTime(wakeRaw);
+  if(!bedP||!wakeP||saving) return;
+
+  saving=true;
+  document.getElementById("log-btn").className="log-btn disabled";
+  document.getElementById("log-btn").textContent="🧠  Analysing…";
+  document.getElementById("loading").style.display="block";
+
+  const mobileTime=document.getElementById("inp-mobile").value.trim();
+  const notesRaw=document.getElementById("inp-notes").value.trim();
+  const mobileNote=mobileTime?`Left mobile at: ${mobileTime}`:"";
+  const fullNotes=[notesRaw,mobileNote].filter(Boolean).join("\n");
+  const date=document.getElementById("inp-date").value;
+  const hours=calcHours(bedP,wakeP);
+  const quality=getQuality(hours);
+  const cfg=QC[quality];
+
+  const entry={
+    id:Date.now(),date,
+    bedLabel:bedP.label,wakeLabel:wakeP.label,
+    hours,quality,notes:fullNotes,mobileTime,
+    analysis:null
+  };
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",max_tokens:1000,
+        system:`You are a warm, grounded sleep coach who specialises in cognitive reframing. This person has a rigid belief: "I need exactly 8 hours or my day is ruined." Your job is NOT to reinforce that belief — your job is to gently challenge it every single time, normalize sleep variability, and remind them that humans are adaptive and capable even on imperfect sleep. Never catastrophize. Never say things like "fatigue likely" or "impaired focus" as definitive facts — instead, frame everything as manageable possibilities. Always end with a clear "you are good to go" energy. Respond ONLY with valid JSON, no markdown, no backticks, no extra text.`,
+        messages:[{role:"user",content:`
+Person slept at ${bedP.label}, woke at ${wakeP.label}. Total: ${hours.toFixed(1)}h.
+Notes: ${fullNotes||"none"}
+
+Return ONLY this JSON:
+{
+  "effectiveHours": <number, real restorative hours after accounting for disruptions — be generous, sleep debt is not linear>,
+  "batteryPct": <number 0-100 — honest but not harsh. Even 5-6h gives 55-65%. The brain adapts.>,
+  "qualityLabel": "<Enough/Good/Great/Solid/Decent — never use punishing words like Bad or Poor>",
+  "readyMessage": "<2 sentences: first — genuinely reassure them they are capable today and good to go. second — one specific reframe that challenges the 8-hour perfectionism belief. Warm, direct, not preachy.>",
+  "psychStates": ["<3 states but framed as possibilities not certainties, e.g. 'You might feel a bit slow starting — that's normal and temporary' not 'cognitive impairment'>"],
+  "reframe": "<one sentence that directly counters the thought 'I didn't get 8 hours so today is ruined' — make it feel true and grounding, not toxic positivity>",
+  "morningTip": "<one small practical thing for today — not about fixing sleep, about functioning well right now>"
+}`}]
+      })
+    });
+    const data=await res.json();
+    const txt=data.content?.map(b=>b.text||"").join("")||"";
+    entry.analysis=JSON.parse(txt);
+  } catch(e){
+    entry.analysis={
+      effectiveHours:+(hours*0.88).toFixed(1),
+      batteryPct:Math.max(cfg.bat, 52),
+      qualityLabel: hours>=7?"Good":"Decent",
+      readyMessage:"You're good to go today. Your brain doesn't need a perfect 8 hours to function — it needs you to stop telling it that it's broken.",
+      psychStates:["You might feel a little slow warming up — totally normal, give it 20 minutes","Your mood may vary a bit — that's just being human, not a sleep deficit crisis","Focus will come once you're moving — your brain is more capable than you think right now"],
+      reframe:"Sleep doesn't have to be perfect to be enough. You've functioned well on nights like this before.",
+      morningTip:"Drink water, get some light, and start one small task. Momentum builds quickly."
+    };
+  }
+
+  logs=[entry,...logs.filter(l=>l.date!==date)];
+  localStorage.setItem("sleepjournal_v1",JSON.stringify(logs));
+
+  // reset form
+  document.getElementById("inp-bed").value="";
+  document.getElementById("inp-wake").value="";
+  document.getElementById("inp-mobile").value="";
+  document.getElementById("inp-notes").value="";
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("on"));
+  document.getElementById("preview").style.display="none";
+  document.getElementById("prev-bar-wrap").style.display="none";
+  document.getElementById("hint-bed").textContent="";
+  document.getElementById("hint-wake").textContent="";
+  document.getElementById("loading").style.display="none";
+  document.getElementById("log-btn").textContent="Analyse My Sleep";
+  saving=false;
+
+  switchView("history");
+}
+
+// ── views ─────────────────────────────────────────────────────────────────────
+function switchView(v){
+  document.getElementById("view-log").style.display     = v==="log"?"block":"none";
+  document.getElementById("view-history").style.display = v==="history"?"block":"none";
+  document.getElementById("view-weekly").style.display  = v==="weekly"?"block":"none";
+  document.getElementById("btn-log").className     = "nav-btn"+(v==="log"?" active":"");
+  document.getElementById("btn-history").className = "nav-btn"+(v==="history"?" active":"");
+  document.getElementById("btn-weekly").className  = "nav-btn"+(v==="weekly"?" active":"");
+  if(v==="history") renderHistory();
+  if(v==="weekly")  renderWeeklySelector();
+}
+
+function renderHistory(){
+  const navTxt = `History${logs.length?" ("+logs.length+")":""}`;
+  document.getElementById("btn-history").textContent=navTxt;
+
+  // stats
+  const sr=document.getElementById("stats-row");
+  if(logs.length){
+    const avgH=(logs.reduce((s,l)=>s+l.hours,0)/logs.length).toFixed(1);
+    const avgB=Math.round(logs.reduce((s,l)=>s+(l.analysis?.batteryPct||QC[l.quality].bat),0)/logs.length);
+    let streak=0; for(const l of logs){ if(l.hours>=7)streak++; else break; }
+    sr.innerHTML=`
+      <div class="stat"><div class="stat-v">${avgH}h</div><div class="stat-l">Avg Sleep</div></div>
+      <div class="stat"><div class="stat-v">${avgB}%</div><div class="stat-l">Avg Battery</div></div>
+      <div class="stat"><div class="stat-v ${streak>=3?"good":""}">${streak}</div><div class="stat-l">Good Streak</div></div>`;
+  } else { sr.innerHTML=""; }
+
+  const hl=document.getElementById("history-list");
+  if(!logs.length){
+    hl.innerHTML=`<div class="empty"><div class="empty-moon">🌑</div>
+      <div class="empty-txt">No nights logged yet</div></div>`;
+    return;
+  }
+
+  hl.innerHTML=logs.map((log,idx)=>{
+    const lc=QC[log.quality];
+    const an=log.analysis;
+    const bat=an?.batteryPct??lc.bat;
+    const bc=batColor(bat);
+    const dateStr=new Date(log.date+"T12:00:00").toLocaleDateString("en-US",
+      {weekday:"long",month:"short",day:"numeric",year:"numeric"});
+    const effNote=an?.effectiveHours&&an.effectiveHours<log.hours
+      ?`<div class="item-eff">~${an.effectiveHours}h effective</div>`:"";
+    const psychStates=an?.psychStates
+      ?.map(p=>`<div class="psy-row"><span style="color:${lc.color}">·</span>${p}</div>`).join("")||"";
+    const notesBlock=log.notes
+      ?`<details><summary>Your notes ▾</summary>
+         <div class="notes-txt">${log.notes}</div></details>`:"";
+
+    return `<div class="log-item" id="item-${log.id}">
+      <button class="del-btn" onclick="deleteLog(${log.id})">×</button>
+      <div class="item-date">${dateStr}</div>
+      <div class="item-times">🌙 ${log.bedLabel} → ☀️ ${log.wakeLabel}
+        ${log.mobileTime?`<span style="margin-left:10px;color:#3a3450">📱 off ${log.mobileTime}</span>`:""}
+      </div>
+      <div class="item-metrics">
+        <div>
+          <div class="item-hrs" style="color:${lc.color}">${log.hours.toFixed(1)}<span style="font-size:12px;opacity:0.6">h</span></div>
+          ${effNote}
+        </div>
+        ${batteryHTML(bat,bc)}
+        <span class="badge" style="background:${lc.bg};border:1px solid ${lc.color}44;color:${lc.color}">
+          ${an?.qualityLabel||lc.label}
+        </span>
+      </div>
+      <div class="qbar-wrap"><div class="qbar-fill" style="width:${Math.min((log.hours/10)*100,100)}%;background:linear-gradient(90deg,${lc.color}44,${lc.color});box-shadow:0 0 6px ${lc.color}44"></div></div>
+      ${an?.readyMessage?`<div class="ready-msg">✦ ${an.readyMessage}</div>`:""}
+      ${psychStates?`<div class="section-lbl">🧠 How you might feel today</div>${psychStates}`:""}
+      ${an?.reframe?`<div class="reframe-msg">💬 "${an.reframe}"</div>`:""}
+      ${an?.morningTip?`<div class="morning-tip">💡 ${an.morningTip}</div>`:""}
+      ${notesBlock}
+    </div>`;
+  }).join("");
+}
+
+function deleteLog(id){
+  logs=logs.filter(l=>l.id!==id);
+  localStorage.setItem("sleepjournal_v1",JSON.stringify(logs));
+  renderHistory();
+}
+
+// ── weekly ────────────────────────────────────────────────────────────────────
+let selectedWeek = null;
+
+function getWeekKey(dateStr){
+  const d=new Date(dateStr+"T12:00:00");
+  const day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1);
+  const mon=new Date(d.setDate(diff));
+  return mon.toISOString().slice(0,10);
+}
+
+function renderWeeklySelector(){
+  if(!logs.length){
+    document.getElementById("weekly-result").innerHTML=
+      `<div class="empty"><div class="empty-moon">🌑</div>
+       <div class="empty-txt">Log some nights first</div></div>`;
+    document.getElementById("week-sel").innerHTML="";
+    return;
+  }
+  // group logs by week
+  const weeks={};
+  logs.forEach(l=>{ const wk=getWeekKey(l.date); if(!weeks[wk])weeks[wk]=[]; weeks[wk].push(l); });
+  const sorted=Object.keys(weeks).sort((a,b)=>b.localeCompare(a));
+  if(!selectedWeek||!weeks[selectedWeek]) selectedWeek=sorted[0];
+
+  const sel=document.getElementById("week-sel");
+  sel.innerHTML=sorted.map(wk=>{
+    const d=new Date(wk+"T12:00:00");
+    const end=new Date(d); end.setDate(end.getDate()+6);
+    const lbl=d.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" – "+
+               end.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    return `<div class="week-opt${wk===selectedWeek?" on":""}" onclick="selectWeek('${wk}')">${lbl} (${weeks[wk].length}d)</div>`;
+  }).join("");
+
+  document.getElementById("weekly-btn").disabled=false;
+  document.getElementById("weekly-result").innerHTML="";
+}
+
+function selectWeek(wk){
+  selectedWeek=wk;
+  renderWeeklySelector();
+  document.getElementById("weekly-result").innerHTML="";
+}
+
+async function runWeekly(){
+  if(!selectedWeek) return;
+  const weeks={};
+  logs.forEach(l=>{ const wk=getWeekKey(l.date); if(!weeks[wk])weeks[wk]=[]; weeks[wk].push(l); });
+  const weekLogs=weeks[selectedWeek];
+  if(!weekLogs||!weekLogs.length) return;
+
+  document.getElementById("weekly-btn").disabled=true;
+  document.getElementById("weekly-loading").style.display="block";
+  document.getElementById("weekly-result").innerHTML="";
+
+  const summary=weekLogs.map(l=>
+    `Date: ${l.date}, Sleep: ${l.bedLabel}–${l.wakeLabel}, Hours: ${l.hours.toFixed(1)}, Quality: ${l.quality}${l.notes?", Notes: "+l.notes:""}`
+  ).join("\n");
+
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",max_tokens:1500,
+        system:"You are a sleep coach specialising in cognitive reframing. This person has a maladaptive belief that they need exactly 8 hours or their day is ruined. In weekly patterns, always look for evidence of this rigid thinking and gently call it out. Focus on normalizing variability. Respond ONLY with valid JSON, no markdown, no backticks.",
+        messages:[{role:"user",content:`
+Here is one week of sleep data:
+${summary}
+
+Analyse PATTERNS across the whole week. Look at notes carefully for recurring behaviours, beliefs, and habits. Pay special attention to signs of sleep perfectionism or catastrophizing.
+
+Return ONLY this JSON:
+{
+  "weekSummary": "<2 honest sentences about the week — normalize the variability, don't catastrophize>",
+  "harmfulPatterns": ["<recurring activities or habits that hurt sleep — specific to their notes>"],
+  "helpfulPatterns": ["<things that seemed to support better nights>"],
+  "beliefsAndMindset": ["<psychological patterns — especially rigid beliefs like needing perfect sleep, pre-sleep anxiety, catastrophizing tired days — name them directly and warmly>"],
+  "oneChange": "<the single most impactful change for next week — could be a behaviour OR a belief shift>"
+}`}]
+      })
+    });
+    const data=await res.json();
+    const txt=data.content?.map(b=>b.text||"").join("")||"";
+    const r=JSON.parse(txt);
+
+    const harmfulHTML=r.harmfulPatterns?.map(p=>
+      `<div class="pattern-item bad"><span>·</span>${p}</div>`).join("")||"";
+    const helpfulHTML=r.helpfulPatterns?.map(p=>
+      `<div class="pattern-item good"><span>·</span>${p}</div>`).join("")||"";
+    const beliefsHTML=r.beliefsAndMindset?.map(p=>
+      `<div class="pattern-item belief"><span>·</span>${p}</div>`).join("")||"";
+
+    document.getElementById("weekly-result").innerHTML=`
+      ${r.weekSummary?`<div class="weekly-insight">"${r.weekSummary}"</div>`:""}
+      ${harmfulHTML?`<div class="pattern-block bad">
+        <div class="pattern-lbl bad">⚡ What's hurting your sleep</div>${harmfulHTML}</div>`:""}
+      ${helpfulHTML?`<div class="pattern-block good">
+        <div class="pattern-lbl good">✦ What's helping your sleep</div>${helpfulHTML}</div>`:""}
+      ${beliefsHTML?`<div class="pattern-block belief">
+        <div class="pattern-lbl belief">🧠 Beliefs & Mindset Patterns</div>${beliefsHTML}</div>`:""}
+      ${r.oneChange?`<div class="morning-tip" style="margin-top:0">💡 <strong>One change for next week:</strong> ${r.oneChange}</div>`:""}
+    `;
+  } catch(e){
+    document.getElementById("weekly-result").innerHTML=
+      `<div style="text-align:center;color:#f87171aa;font-family:monospace;font-size:12px;padding:20px">
+        Could not analyse — try again</div>`;
+  }
+
+  document.getElementById("weekly-loading").style.display="none";
+  document.getElementById("weekly-btn").disabled=false;
+}
+renderHistory();
+document.getElementById("btn-history").textContent=`History${logs.length?" ("+logs.length+")":""}`;
+</script>
+</body>
+</html>
